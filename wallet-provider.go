@@ -11,6 +11,8 @@ import (
 	evmWalletStore "github.com/zd4r/wallet-provider/store/evm_wallet"
 	"github.com/zd4r/wallet-provider/store/passphrase"
 	"golang.org/x/term"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 const (
