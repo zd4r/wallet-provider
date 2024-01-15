@@ -3,6 +3,7 @@ package evm_wallet
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"time"
 
 	"github.com/ethereum/go-ethereum/accounts"
@@ -39,16 +40,13 @@ func (s *Service) Sigh(address string, msg []byte) ([]byte, error) {
 	return s.keyStore.SignHashWithPassphrase(acc, s.passphraseStore.Get(), msg)
 }
 
-// TODO: improve speed
 func (s *Service) CheckAccess() error {
-	for _, account := range s.keyStore.Accounts() {
-		if err := s.keyStore.TimedUnlock(
-			account,
-			s.passphraseStore.Get(),
-			1*time.Microsecond,
-		); err != nil {
-			return fmt.Errorf("failed to unlock keystore: %w", err)
-		}
+	if err := s.keyStore.TimedUnlock(
+		s.keyStore.Accounts()[rand.Intn(len(s.keyStore.Accounts()))],
+		s.passphraseStore.Get(),
+		1*time.Microsecond,
+	); err != nil {
+		return fmt.Errorf("failed to unlock keystore: %w", err)
 	}
 
 	return nil
