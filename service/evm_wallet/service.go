@@ -29,6 +29,7 @@ func (s *Service) GetList(ctx context.Context) ([]evmWalletModel.EvmWallet, erro
 	return s.walletStore.GetList(ctx)
 }
 
+// TODO: update or add new to sign as metamask
 func (s *Service) Sigh(address string, msg []byte) ([]byte, error) {
 	acc, err := s.keyStore.Find(accounts.Account{Address: common.HexToAddress(address)})
 	if err != nil {
@@ -38,6 +39,7 @@ func (s *Service) Sigh(address string, msg []byte) ([]byte, error) {
 	return s.keyStore.SignHashWithPassphrase(acc, s.passphraseStore.Get(), msg)
 }
 
+// TODO: improve speed
 func (s *Service) CheckAccess() error {
 	for _, account := range s.keyStore.Accounts() {
 		if err := s.keyStore.TimedUnlock(
@@ -47,6 +49,32 @@ func (s *Service) CheckAccess() error {
 		); err != nil {
 			return fmt.Errorf("failed to unlock keystore: %w", err)
 		}
+	}
+
+	return nil
+}
+
+func (s *Service) CheckAccessWithUnlockAll() error {
+	for _, account := range s.keyStore.Accounts() {
+		if err := s.keyStore.TimedUnlock(
+			account,
+			s.passphraseStore.Get(),
+			0,
+		); err != nil {
+			return fmt.Errorf("failed to unlock keystore: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func (s *Service) CheckAccessWithUnlock(account accounts.Account) error {
+	if err := s.keyStore.TimedUnlock(
+		account,
+		s.passphraseStore.Get(),
+		0,
+	); err != nil {
+		return fmt.Errorf("failed to unlock keystore: %w", err)
 	}
 
 	return nil
