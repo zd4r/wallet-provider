@@ -52,23 +52,13 @@ func (s *Service) CheckAccess() error {
 	return nil
 }
 
-func (s *Service) CheckAccessWithUnlockAll() error {
-	for _, account := range s.keyStore.Accounts() {
-		if err := s.keyStore.TimedUnlock(
-			account,
-			s.passphraseStore.Get(),
-			0,
-		); err != nil {
-			return fmt.Errorf("failed to unlock keystore: %w", err)
-		}
-	}
+func (s *Service) UnlockWallet(address string) error {
+	a := common.HexToAddress(address)
 
-	return nil
-}
-
-func (s *Service) CheckAccessWithUnlock(account accounts.Account) error {
 	if err := s.keyStore.TimedUnlock(
-		account,
+		accounts.Account{
+			Address: a,
+		},
 		s.passphraseStore.Get(),
 		0,
 	); err != nil {
