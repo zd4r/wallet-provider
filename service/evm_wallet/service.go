@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	evmWalletModel "github.com/zd4r/wallet-provider/model/evm_wallet"
 )
 
@@ -30,14 +31,33 @@ func (s *Service) GetList(ctx context.Context) ([]evmWalletModel.EvmWallet, erro
 	return s.walletStore.GetList(ctx)
 }
 
-// TODO: update or add new to sign as metamask
-func (s *Service) Sigh(address string, msg []byte) ([]byte, error) {
+func (s *Service) SighWithPassphrase(address string, msg []byte) ([]byte, error) {
 	acc, err := s.keyStore.Find(accounts.Account{Address: common.HexToAddress(address)})
 	if err != nil {
 		return nil, err
 	}
 
 	return s.keyStore.SignHashWithPassphrase(acc, s.passphraseStore.Get(), msg)
+}
+
+func (s *Service) SignAsMetamask(address, msg string) ([]byte, error) {
+	data := crypto.Keccak256(
+		[]byte(fmt.Sprintf("\x19Ethereum Signed Message:\n%d%s", len(msg), msg)),
+	)
+
+	acc, err := s.keyStore.Find(accounts.Account{Address: common.HexToAddress(address)})
+	if err != nil {
+		return nil, err
+	}
+
+	signature, err := s.keyStore.SignHash(acc, data)
+	if err != nil {
+		return nil, err
+	}
+	
+	signature[64] += 27
+
+	return signature, nil
 }
 
 func (s *Service) CheckAccess() error {
@@ -53,11 +73,9 @@ func (s *Service) CheckAccess() error {
 }
 
 func (s *Service) UnlockWallet(address string) error {
-	a := common.HexToAddress(address)
-
 	if err := s.keyStore.TimedUnlock(
 		accounts.Account{
-			Address: a,
+			Address: common.HexToAddress(address),
 		},
 		s.passphraseStore.Get(),
 		0,
