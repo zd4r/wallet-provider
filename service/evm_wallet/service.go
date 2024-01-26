@@ -40,7 +40,7 @@ func (s *Service) SighWithPassphrase(address string, msg []byte) ([]byte, error)
 	return s.keyStore.SignHashWithPassphrase(acc, s.passphraseStore.Get(), msg)
 }
 
-func (s *Service) SignAsMetamask(address, msg string) ([]byte, error) {
+func (s *Service) SignMetamaskPersonalSign(address, msg string) ([]byte, error) {
 	data := crypto.Keccak256(
 		[]byte(fmt.Sprintf("\x19Ethereum Signed Message:\n%d%s", len(msg), msg)),
 	)
@@ -54,7 +54,7 @@ func (s *Service) SignAsMetamask(address, msg string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	signature[64] += 27
 
 	return signature, nil
